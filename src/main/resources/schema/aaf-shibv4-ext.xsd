@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:resolver="urn:mace:shibboleth:2.0:resolver"
+        xmlns:sec="urn:mace:shibboleth:2.0:security"
+        targetNamespace="urn:mace:aaf.edu.au:shibboleth:2.0:resolver"
+        elementFormDefault="qualified" version="4.0">
+
+  <import namespace="http://www.w3.org/XML/1998/namespace" schemaLocation="http://www.w3.org/2001/xml.xsd"/>
+  <import namespace="urn:mace:shibboleth:2.0:resolver" schemaLocation="http://shibboleth.net/schema/idp/shibboleth-attribute-resolver.xsd"/>
+
+  <complexType name="SharedToken">
+    <annotation>
+      <documentation>
+        Connector that generates or retrieves a auEduPersonSharedToken from a database.
+      </documentation>
+    </annotation>
+    <complexContent>
+      <extension base="resolver:BaseDataConnectorType">
+        <choice  maxOccurs="unbounded" minOccurs="0">
+          <element ref="resolver:InputAttributeDefinition"/>
+          <element ref="resolver:InputDataConnector"/>
+          <element ref="resolver:SimpleManagedConnection"/>
+          <element ref="resolver:ContainerManagedConnection">
+            <annotation>
+              <documentation>
+                A connection, or pool of connections, to the database managed by the application
+                container.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="BeanManagedConnection" type="resolver:string">
+            <annotation>
+              <documentation>
+                A connection, or pool of connections, to the database configured in a Spring bean.
+              </documentation>
+            </annotation>
+          </element>
+        </choice>
+        <attribute name="salt" type="resolver:string" use="required">
+          <annotation>
+            <documentation>
+              The salt used in auEduPersonSharedToken generation algorithm. Must be at least 16 characters.
+            </documentation>
+          </annotation>
+        </attribute>
+        <attribute name="primaryKeyName" type="resolver:string" default="uid" use="optional">
+          <annotation>
+            <documentation>
+              The primary key name of the tb_st table.
+            </documentation>
+          </annotation>
+        </attribute>
+        <attribute name="generatedAttributeID" type="resolver:string" default="auEduPersonSharedToken" use="optional">
+          <annotation>
+            <documentation>
+              The name of the attribute produced by this data connector.
+            </documentation>
+          </annotation>
+        </attribute>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>
+

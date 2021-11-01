@@ -1,0 +1,51 @@
+<schema targetNamespace="urn:mace:aaf.edu.au:shibboleth:2.0:resolver:dc"
+        xmlns="http://www.w3.org/2001/XMLSchema"
+        xmlns:resolver="urn:mace:shibboleth:2.0:resolver"
+        elementFormDefault="qualified">
+
+  <import namespace="urn:mace:shibboleth:2.0:resolver"
+          schemaLocation="classpath:/schema/shibboleth-2.0-attribute-resolver.xsd"/>
+
+  <complexType name="SharedToken">
+    <annotation>
+      <documentation>
+        Connector that generates or retrieves a auEduPersonSharedToken from a database.
+      </documentation>
+    </annotation>
+    <complexContent>
+      <extension base="resolver:BaseDataConnectorType">
+        <attribute name="sourceAttributeId" type="string" use="required">
+          <annotation>
+            <documentation>
+              Name of the source attribute used for the auEduPersonSharedToken generation. Ideally a unique identifier
+              that never changes.
+            </documentation>
+          </annotation>
+        </attribute>
+        <attribute name="salt" type="string" use="required">
+          <annotation>
+            <documentation>
+              The salt used in auEduPersonSharedToken generation algorithm. Must be at least 16 characters.
+            </documentation>
+          </annotation>
+        </attribute>
+        <attribute name="primaryKeyName" type="string" default="uid" use="optional">
+          <annotation>
+            <documentation>
+              The primary key name of the tb_st table.
+            </documentation>
+          </annotation>
+        </attribute>
+        <attribute name="dataSource" type="string" use="required">
+          <annotation>
+            <documentation>
+              The container managed datasource identifier.
+            </documentation>
+          </annotation>
+        </attribute>
+      </extension>
+    </complexContent>
+  </complexType>
+
+</schema>
+

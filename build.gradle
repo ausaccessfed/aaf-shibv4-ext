@@ -1,0 +1,126 @@
+apply plugin: 'java'
+apply plugin: 'pmd'
+apply plugin: 'jacoco'
+
+def shibboleth_idp_version = '4.0.1'
+
+group = 'au.edu.aaf'
+version = '2.0.0'
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+    maven {
+        url 'https://build.shibboleth.net/nexus/content/repositories/releases/'
+    }
+}
+
+dependencies {
+    implementation 'net.shibboleth.idp:idp-attribute-api:' + shibboleth_idp_version
+    implementation 'net.shibboleth.idp:idp-attribute-resolver-api:' + shibboleth_idp_version
+    implementation 'net.shibboleth.idp:idp-attribute-resolver-impl:' + shibboleth_idp_version
+    implementation 'net.shibboleth.idp:idp-attribute-resolver-spring:' + shibboleth_idp_version
+    implementation 'org.springframework:spring-jdbc:4.3.2.RELEASE'
+
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.mockito:mockito-core:2.0.5-beta"
+    testImplementation 'org.springframework:spring-test:4.3.2.RELEASE'
+    testImplementation 'com.h2database:h2:1.4.187'
+}
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+pmd {
+    ruleSets = [
+            'java-basic',
+            'java-codesize',
+            'java-empty',
+            'java-strictexception',
+            'java-strings',
+            'java-typeresolution',
+            'java-unnecessary',
+            'java-unusedcode'
+    ]
+    ignoreFailures = false
+    sourceSets = [sourceSets.main, sourceSets.test]
+}
+
+ext {
+    limits = [
+            'instruction': 85,
+            'branch'     : 85,
+            'line'       : 85,
+            'complexity' : 85,
+            'method'     : 85,
+            'class'      : 85
+    ]
+}
+
+jacoco {
+    toolVersion = "0.7.5.201505241946"
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+    }
+
+    doLast {
+        def report = file("${jacoco.reportsDir}/test/jacocoTestReport.xml")
+        logger.lifecycle("Checking coverage results: ${report}")
+
+        def parser = new XmlParser()
+        parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+        def results = parser.parse(report)
+
+        def percentage = {
+            def covered = it.'@covered' as Double
+            def missed = it.'@missed' as Double
+            ((covered / (covered + missed)) * 100).round(2)
+        }
+
+        def counters = results.counter
+        def metrics = [:]
+        metrics << [
+                'instruction': percentage(counters.find { it.'@type'.equals('INSTRUCTION') }),
+                'branch'     : percentage(counters.find { it.'@type'.equals('BRANCH') }),
+                'line'       : percentage(counters.find { it.'@type'.equals('LINE') }),
+                'complexity' : percentage(counters.find { it.'@type'.equals('COMPLEXITY') }),
+                'method'     : percentage(counters.find { it.'@type'.equals('METHOD') }),
+                'class'      : percentage(counters.find { it.'@type'.equals('CLASS') })
+        ]
+
+        def failures = []
+        def passed = []
+        metrics.each {
+            def limit = limits[it.key]
+            if (it.value < limit) {
+                failures.add("- ${it.key} coverage rate is: ${it.value}%, minimum is ${limit}%")
+            } else {
+                passed.add("- ${it.key} coverage rate is: ${it.value}%, minimum is ${limit}%")
+            }
+        }
+
+        logger.quiet("------------------ Code Coverage -----------------------")
+        if (passed) {
+            passed.each {
+                logger.quiet(it)
+            }
+        }
+        if (failures) {
+            logger.quiet("FAILURES: ")
+            failures.each {
+                logger.quiet(it)
+            }
+            throw new GradleException("Code coverage failed")
+        }
+        logger.quiet("--------------------------------------------------------")
+    }
+}
+check.dependsOn jacocoTestReport
+check.dependsOn javadoc
