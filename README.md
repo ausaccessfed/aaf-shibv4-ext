@@ -1,8 +1,7 @@
 # AAF Shibboleth Extensions
 
-A [Shibboleth IdP custom extension](https://wiki.shibboleth.net/confluence/display/SHIB2/IdPDevCustomExtension) which 
-enables [auEduPersonSharedToken](http://wiki.aaf.edu.au/tech-info/attributes/auedupersonsharedtoken) for Shibboleth 
-IdP 3.3.1.
+A [Shibboleth IdP custom extension](https://shibboleth.atlassian.net/wiki/spaces/IDP4/pages/1265631880/ExtensionsConcepts) which 
+enables [auEduPersonSharedToken](https://validator.aaf.edu.au/documentation/attributes/oid:1.3.6.1.4.1.27856.1.2.5) for Shibboleth IdP 4.1.X.
 
 The following features are provided:
 
@@ -16,7 +15,7 @@ In a production environment, the auEduPersonSharedToken must be only generated *
 the institution's database for future use.
 
 # Requirements
-- Shibboleth IdP 3.3.1 operating with Java 8 or later.
+- Shibboleth IdP 4.0.1 or greater operating with Java 11 or later.
 - A database for auEduPersonSharedToken storage. It is **strongly** recommended administrators configure regular 
 backups and monitoring for this database. **Loss of this data will disable federated access for your users**.
 
@@ -47,20 +46,17 @@ xsi:schemaLocation="...
 
 Define the `DataConnector`
 ```
-<resolver:DataConnector xsi:type="SharedToken" xmlns="urn:mace:aaf.edu.au:shibboleth:2.0:resolver:dc"
-                    id="sharedToken"
-                    sourceAttributeId="uniqueIdentifier"
+<DataConnector xsi:type="aaf:SharedToken" id="sharedToken"
                     salt="Ez8m1HDSLBxu0JNcPEywmOpy+apq4Niw9kEMmAyWbhJqcfAb"
-                    dataSource="jdbc/DS_idp_admin"
                     primaryKeyName="uid">
-                    <resolver:Dependency ref="..." />
-</resolver:DataConnector>
+                    <InputAttributeDefinition ref="%{idp.persistentId.sourceAttribute}" />
+                    <aaf:BeanManagedConnection>shibboleth.JPAStorageService.DataSource</aaf:BeanManagedConnection>
+</DataConnector>
 ``` 
 
 Attributes:
 
 - `id`: (mandatory) the unique identifier for the data connector.
-- `sourceAttributeID`: used for computing the sharedToken — ideally a unique identifier that never changes.
 - `salt`: (mandatory)  a string of random data, used when computing sharedToken. Must be at least 16 characters. N.B. Once set, 
 this value **must never change**. Please keep a copy of this value. This value can be generated with the openssl 
 command: 
@@ -73,6 +69,8 @@ for installing a JNDI datasource. Also ensure the specified JDBC driver is on th
     3. Restart app server
 - `primaryKeyName`: (optional) The column name used for the primary key in the shared token database table. The default is 'uid'
 which works for MySQL databases but is a reserved word for ORACLE.
+
+The InputAttributeDefinition (or InputDataConnector) provides the source for the users unique ID to be used when generating their shared token value.
 
 ## 3. Configure logging
 
